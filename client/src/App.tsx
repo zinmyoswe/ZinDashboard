@@ -1,13 +1,14 @@
-import React from "react"
 import { ThemeProvider } from "./components/theme-provider"
-import { ModeToggle } from "./components/mode-toggle"
 import { Routes, Route, useLocation, Navigate } from "react-router-dom"
 import Navbar from "./components/Navbar"
+import ProtectedRoute from "./components/ProtectedRoute"
 
 /* USER SIDE PAGES */
 import Home from "./pages/Home"
 import Sales from "./pages/Sales"
 import Customers from "./pages/Customers"
+import Login from "./pages/Login"
+import Register from "./pages/Register"
 
 /* ADMIN LAYOUT */
 import AdminLayout from "./layouts/AdminLayout"
@@ -45,8 +46,16 @@ const App = () => {
         {/* Optional customer selection */}
         <Route path="/customers" element={<Customers />} />
 
+        {/* Auth routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
         {/* ================= ADMIN SIDE ================= */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="products" element={<Products />} />
