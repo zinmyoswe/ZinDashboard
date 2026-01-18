@@ -21,6 +21,7 @@ import {
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spinner } from "@/components/ui/spinner";
+import defaultUserImage from '../../assets/defaultuser.png';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -282,7 +283,7 @@ const Users = () => {
                   <p><strong>Role:</strong> {viewingUser.role === 1 ? 'Admin' : 'Regular User'}</p>
                   <p><strong>Department:</strong> {viewingUser.department}</p>
                   <p><strong>Active:</strong> {viewingUser.isActive ? 'Yes' : 'No'}</p>
-                  <p><strong>Image:</strong> <img src={viewingUser.image} alt={viewingUser.name} className="h-16 w-16 rounded-full object-cover" /></p>
+                  <p><strong>Image:</strong> <img src={viewingUser.image || defaultUserImage} alt={viewingUser.name} className="h-16 w-16 rounded-full object-cover" /></p>
                 </div>
               )}
               <div className="flex justify-end">
@@ -323,7 +324,7 @@ const Users = () => {
                 <TableRow key={user._id} onClick={() => handleViewDialog(user)} className="cursor-pointer">
                   <TableCell>
                     <img
-                      src={user.image}
+                      src={user.image || defaultUserImage}
                       alt={user.name}
                       className="h-8 w-8 rounded-full object-cover"
                     />

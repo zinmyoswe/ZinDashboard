@@ -48,6 +48,27 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Set up axios interceptor for authentication
+  useEffect(() => {
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup interceptor on unmount
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
+
   const fetchSuppliers = async () => {
     setLoading(true);
     setError(null);
@@ -113,7 +134,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/user`);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setUsers(response.data);
     } catch (err: any) {
       setError(err.message);
@@ -126,7 +152,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/user`, user);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/api/user`, user, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const newUser = response.data;
       setUsers((prevUsers) => [...prevUsers, newUser]);
       return newUser;
@@ -142,7 +173,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.put(`${API_BASE_URL}/api/user/${id}`, updatedUser);
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API_BASE_URL}/api/user/${id}`, updatedUser, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const result = response.data;
       setUsers((prevUsers) =>
         prevUsers.map((user) => (user._id === id ? result : user))
@@ -160,7 +196,12 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      await axios.delete(`${API_BASE_URL}/api/user/${id}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/api/user/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setUsers((prevUsers) => prevUsers.filter((user) => user._id !== id));
     } catch (err: any) {
       setError(err.message);
