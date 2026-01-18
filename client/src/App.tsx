@@ -31,7 +31,7 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       
-
+      
       {/* USER NAVBAR ONLY */}
       {!isAdminRoute && <Navbar />}
 
