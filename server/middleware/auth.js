@@ -10,7 +10,7 @@ export const authenticate = async (req, res, next) => {
         const user = await User.findById(decoded.id);
         if (!user) return res.status(401).json({ message: 'Token is not valid' });
 
-        req.user = decoded;
+        req.user = user;
         next();
     } catch (error) {
         res.status(401).json({ message: 'Token is not valid' });

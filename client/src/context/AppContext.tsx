@@ -23,9 +23,29 @@ interface User {
   image: string;
 }
 
+interface PurchaseItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+interface Purchase {
+  _id: string;
+  supplierId: string;
+  supplierName: string;
+  items: PurchaseItem[];
+  totalAmount: number;
+  status: string;
+  date: string;
+  notes?: string;
+}
+
 interface AppContextType {
   suppliers: Supplier[];
   users: User[];
+  purchases: Purchase[];
   loading: boolean;
   error: string | null;
   fetchSuppliers: () => Promise<void>;
@@ -36,6 +56,10 @@ interface AppContextType {
   addUser: (user: User) => Promise<User>;
   updateUser: (id: string, updatedUser: Partial<User>) => Promise<User>;
   deleteUser: (id: string) => Promise<void>;
+  fetchPurchases: () => Promise<void>;
+  addPurchase: (purchase: Omit<Purchase, '_id'>) => Promise<Purchase>;
+  updatePurchase: (id: string, updatedPurchase: Partial<Purchase>) => Promise<Purchase>;
+  deletePurchase: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -45,6 +69,7 @@ const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,6 +236,87 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchPurchases = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/purchase`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setPurchases(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addPurchase = async (purchase: Omit<Purchase, '_id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_BASE_URL}/api/purchase`, purchase, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const newPurchase = response.data;
+      setPurchases((prevPurchases) => [...prevPurchases, newPurchase]);
+      return newPurchase;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePurchase = async (id: string, updatedPurchase: Partial<Purchase>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API_BASE_URL}/api/purchase/${id}`, updatedPurchase, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const result = response.data;
+      setPurchases((prevPurchases) =>
+        prevPurchases.map((purchase) => (purchase._id === id ? result : purchase))
+      );
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePurchase = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_BASE_URL}/api/purchase/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setPurchases((prevPurchases) => prevPurchases.filter((purchase) => purchase._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -220,6 +326,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         suppliers,
         users,
+        purchases,
         loading,
         error,
         fetchSuppliers,
@@ -230,6 +337,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         addUser,
         updateUser,
         deleteUser,
+        fetchPurchases,
+        addPurchase,
+        updatePurchase,
+        deletePurchase,
       }}
     >
       {children}
