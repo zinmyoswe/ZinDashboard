@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
 
 interface Supplier {
   _id: string;
@@ -42,10 +43,32 @@ interface Purchase {
   notes?: string;
 }
 
+interface MarketingItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  total: number;
+  imageUrl?: string;
+}
+
+interface MarketingOrder {
+  _id: string;
+  storeId?: string;
+  storeName: string;
+  campaignName?: string;
+  items: MarketingItem[];
+  totalAmount: number;
+  status: 'Draft' | 'HandedOver';
+  date: string;
+  notes?: string;
+}
+
 interface AppContextType {
   suppliers: Supplier[];
   users: User[];
   purchases: Purchase[];
+  marketingOrders: MarketingOrder[];
   loading: boolean;
   error: string | null;
   fetchSuppliers: () => Promise<void>;
@@ -60,25 +83,47 @@ interface AppContextType {
   addPurchase: (purchase: Omit<Purchase, '_id'>) => Promise<Purchase>;
   updatePurchase: (id: string, updatedPurchase: Partial<Purchase>) => Promise<Purchase>;
   deletePurchase: (id: string) => Promise<void>;
+  fetchMarketingOrders: () => Promise<void>;
+  addMarketingOrder: (order: Omit<MarketingOrder, '_id'>) => Promise<MarketingOrder>;
+  updateMarketingOrder: (id: string, updatedOrder: Partial<MarketingOrder>) => Promise<MarketingOrder>;
+  deleteMarketingOrder: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
+const isTokenExpired = (token: string | null): boolean => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch {
+    return true;
+  }
+};
+
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [marketingOrders, setMarketingOrders] = useState<MarketingOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Set up axios interceptor for authentication
   useEffect(() => {
-    const interceptor = axios.interceptors.request.use(
+    const requestInterceptor = axios.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('token');
-        if (token) {
+        if (token && !config.url?.includes('/api/supplier') && !config.url?.includes('/api/user') && !config.url?.includes('/api/purchase')) {
+          if (isTokenExpired(token)) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return Promise.reject(new Error('Token expired'));
+          }
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -88,9 +133,23 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Cleanup interceptor on unmount
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Token is invalid or expired, clear storage and redirect to login
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup interceptors on unmount
     return () => {
-      axios.interceptors.request.eject(interceptor);
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
     };
   }, []);
 
@@ -159,12 +218,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/api/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(`${API_BASE_URL}/api/user`);
       setUsers(response.data);
     } catch (err: any) {
       setError(err.message);
@@ -177,12 +231,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/api/user`, user, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/user`, user);
       const newUser = response.data;
       setUsers((prevUsers) => [...prevUsers, newUser]);
       return newUser;
@@ -198,12 +247,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(`${API_BASE_URL}/api/user/${id}`, updatedUser, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.put(`${API_BASE_URL}/api/user/${id}`, updatedUser);
       const result = response.data;
       setUsers((prevUsers) =>
         prevUsers.map((user) => (user._id === id ? result : user))
@@ -221,12 +265,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/api/user/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.delete(`${API_BASE_URL}/api/user/${id}`);
       setUsers((prevUsers) => prevUsers.filter((user) => user._id !== id));
     } catch (err: any) {
       setError(err.message);
@@ -240,12 +279,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_BASE_URL}/api/purchase`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(`${API_BASE_URL}/api/purchase`);
       setPurchases(response.data);
     } catch (err: any) {
       setError(err.message);
@@ -258,12 +292,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_BASE_URL}/api/purchase`, purchase, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(`${API_BASE_URL}/api/purchase`, purchase);
       const newPurchase = response.data;
       setPurchases((prevPurchases) => [...prevPurchases, newPurchase]);
       return newPurchase;
@@ -279,12 +308,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.put(`${API_BASE_URL}/api/purchase/${id}`, updatedPurchase, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.put(`${API_BASE_URL}/api/purchase/${id}`, updatedPurchase);
       const result = response.data;
       setPurchases((prevPurchases) =>
         prevPurchases.map((purchase) => (purchase._id === id ? result : purchase))
@@ -302,13 +326,69 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_BASE_URL}/api/purchase/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.delete(`${API_BASE_URL}/api/purchase/${id}`);
       setPurchases((prevPurchases) => prevPurchases.filter((purchase) => purchase._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMarketingOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/marketing`);
+      setMarketingOrders(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addMarketingOrder = async (order: Omit<MarketingOrder, '_id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/marketing`, order);
+      const newOrder = response.data;
+      setMarketingOrders((prevOrders) => [...prevOrders, newOrder]);
+      return newOrder;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateMarketingOrder = async (id: string, updatedOrder: Partial<MarketingOrder>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/marketing/${id}`, updatedOrder);
+      const result = response.data;
+      setMarketingOrders((prevOrders) =>
+        prevOrders.map((order) => (order._id === id ? result : order))
+      );
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteMarketingOrder = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/marketing/${id}`);
+      setMarketingOrders((prevOrders) => prevOrders.filter((order) => order._id !== id));
     } catch (err: any) {
       setError(err.message);
       throw err;
@@ -327,6 +407,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         suppliers,
         users,
         purchases,
+        marketingOrders,
         loading,
         error,
         fetchSuppliers,
@@ -341,6 +422,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         addPurchase,
         updatePurchase,
         deletePurchase,
+        fetchMarketingOrders,
+        addMarketingOrder,
+        updateMarketingOrder,
+        deleteMarketingOrder,
       }}
     >
       {children}

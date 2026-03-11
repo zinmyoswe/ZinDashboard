@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { Badge } from "@/components/ui/badge"
 
 interface PurchaseItem {
   productId: string;
@@ -62,6 +63,21 @@ interface Purchase {
 
 const statusOptions = ['Pending', 'Approved', 'Received', 'Cancelled'];
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'Pending':
+      return <Badge className="bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300">{status}</Badge>;
+    case 'Approved':
+      return <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">{status}</Badge>;
+    case 'Received':
+      return <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">{status}</Badge>;
+    case 'Cancelled':
+      return <Badge className="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300">{status}</Badge>;
+    default:
+      return <Badge>{status}</Badge>;
+  }
+};
+
 const Purchases = () => {
   const { purchases, suppliers, loading, error, fetchPurchases, addPurchase, updatePurchase, deletePurchase } = useAppContext();
   const navigate = useNavigate();
@@ -75,6 +91,7 @@ const Purchases = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [open, setOpen] = useState(false);
   const [newItem, setNewItem] = useState({ productName: '', quantity: 0, price: 0, imageUrl: '' });
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<Omit<Purchase, '_id'>>({
     supplierId: '',
     supplierName: '',
@@ -190,9 +207,26 @@ const Purchases = () => {
         total,
         imageUrl: newItem.imageUrl || undefined,
       };
-      setFormData(prev => ({ ...prev, items: [...prev.items, item] }));
+      if (editingItemIndex !== null && editingItemIndex >= 0 && editingItemIndex < formData.items.length) {
+        setFormData(prev => ({ ...prev, items: prev.items.map((it, i) => i === editingItemIndex ? item : it) }));
+        setEditingItemIndex(null);
+      } else {
+        setFormData(prev => ({ ...prev, items: [...prev.items, item] }));
+      }
       setNewItem({ productName: '', quantity: 0, price: 0, imageUrl: '' });
     }
+  };
+
+  const handleEditItem = (index: number) => {
+    const item = formData.items[index];
+    if (!item) return;
+    setNewItem({ productName: item.productName, quantity: item.quantity, price: item.price, imageUrl: item.imageUrl || '' });
+    setEditingItemIndex(index);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemIndex(null);
+    setNewItem({ productName: '', quantity: 0, price: 0, imageUrl: '' });
   };
 
   const handleRemoveItem = (index: number) => {
@@ -344,8 +378,11 @@ const Purchases = () => {
                           onChange={(e) => setNewItem({ ...newItem, imageUrl: e.target.value })}
                         />
                       </div>
-                      <div className="flex items-end">
-                        <Button type="button" onClick={handleAddItem} className="w-full">Add Item</Button>
+                      <div className="flex items-end space-x-2">
+                        <Button type="button" onClick={handleAddItem} className="w-full">{editingItemIndex !== null ? 'Update Item' : 'Add Item'}</Button>
+                        {editingItemIndex !== null && (
+                          <Button type="button" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
+                        )}
                       </div>
                     </div>
                     {formData.items.length > 0 && (
@@ -372,17 +409,20 @@ const Purchases = () => {
                                 )}
                               </TableCell>
                               <TableCell>{item.quantity}</TableCell>
-                              <TableCell>${item.price.toFixed(2)}</TableCell>
-                              <TableCell>${item.total.toFixed(2)}</TableCell>
+                              <TableCell>฿ {item.price.toFixed(2)}</TableCell>
+                              <TableCell>฿ {item.total.toFixed(2)}</TableCell>
                               <TableCell>
-                                <Button type="button" variant="outline" size="sm" onClick={() => handleRemoveItem(index)}>Remove</Button>
+                                <div className="flex space-x-2">
+                                  <Button type="button" variant="outline" size="sm" onClick={() => handleEditItem(index)}>Edit</Button>
+                                  <Button type="button" variant="outline" size="sm" onClick={() => handleRemoveItem(index)}>Remove</Button>
+                                </div>
                               </TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     )}
-                    <div className="font-semibold">Total Amount: ${formData.totalAmount.toFixed(2)}</div>
+                    <div className="font-semibold">Total Amount: ฿ {formData.totalAmount.toFixed(2)}</div>
                   </div>
                   
                   <div className="flex justify-end space-x-2">
@@ -429,8 +469,8 @@ const Purchases = () => {
                 <TableRow key={purchase._id}>
                   <TableCell>{purchase.supplierName}</TableCell>
                   <TableCell>{new Date(purchase.date).toLocaleDateString()}</TableCell>
-                  <TableCell>${purchase.totalAmount.toFixed(2)}</TableCell>
-                  <TableCell>{purchase.status}</TableCell>
+                  <TableCell>฿ {purchase.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>{getStatusBadge(purchase.status)}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button

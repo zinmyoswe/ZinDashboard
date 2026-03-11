@@ -12,6 +12,7 @@ import {
 } from '../../components/ui/table';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Badge } from '../../components/ui/badge';
 
 interface PurchaseItem {
   productId: string;
@@ -38,6 +39,21 @@ const PurchaseDetails = () => {
   const { purchases, loading } = useAppContext();
   const [purchase, setPurchase] = useState<Purchase | null>(null);
   const navigate = useNavigate();
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Pending':
+        return <Badge className="bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300">{status}</Badge>;
+      case 'Approved':
+        return <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">{status}</Badge>;
+      case 'Received':
+        return <Badge className="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300">{status}</Badge>;
+      case 'Cancelled':
+        return <Badge variant="destructive">{status}</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -71,8 +87,8 @@ const PurchaseDetails = () => {
               <h2 className="text-lg font-semibold">Purchase Information</h2>
               <p><strong>Supplier:</strong> {purchase.supplierName}</p>
               <p><strong>Date:</strong> {new Date(purchase.date).toLocaleDateString()}</p>
-              <p><strong>Status:</strong> {purchase.status}</p>
-              <p><strong>Total Amount:</strong> ${purchase.totalAmount.toFixed(2)}</p>
+              <p><strong>Status:</strong> {getStatusBadge(purchase.status)}</p>
+              <p><strong>Total Amount:</strong> ฿ {purchase.totalAmount.toFixed(2)}</p>
               {purchase.notes && <p><strong>Notes:</strong> {purchase.notes}</p>}
             </div>
           </div>
@@ -94,14 +110,14 @@ const PurchaseDetails = () => {
                   <TableCell>{item.productName}</TableCell>
                   <TableCell>
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.productName} className="h-8 w-8 rounded object-cover" />
+                      <img src={item.imageUrl} alt={item.productName} className="h-20 w-20 rounded object-cover" />
                     ) : (
                       <span className="text-gray-400">No image</span>
                     )}
                   </TableCell>
                   <TableCell>{item.quantity}</TableCell>
-                  <TableCell>${item.price.toFixed(2)}</TableCell>
-                  <TableCell>${item.total.toFixed(2)}</TableCell>
+                  <TableCell>฿ {item.price.toFixed(2)}</TableCell>
+                  <TableCell>฿ {item.total.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

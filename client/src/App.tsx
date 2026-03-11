@@ -24,6 +24,7 @@ import StockLogs from "./admin/pages/StockLogs"
 import Users from "./admin/pages/Users"
 import Roles from "./admin/pages/Roles"
 import Reports from "./admin/pages/Reports"
+import Marketing from "./admin/pages/Marketing"
 import Dashboard from "./admin/pages/Dashboard"
 
 const App = () => {
@@ -63,6 +64,7 @@ const App = () => {
           <Route path="suppliers" element={<Suppliers />} />
           <Route path="purchases" element={<Purchases />} />
           <Route path="purchases/:id" element={<PurchaseDetails />} />
+          <Route path="marketing" element={<Marketing />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="stock-logs" element={<StockLogs />} />
           <Route path="users" element={<Users />} />

@@ -10,11 +10,11 @@ import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Admin only routes for purchases
-router.get('/', authenticate, authorize([0, 1]), getPurchases);
-router.get('/:id', authenticate, authorize([0, 1]), getPurchase);
-router.post('/', authenticate, authorize([0, 1]), createPurchase);
-router.put('/:id', authenticate, authorize([0, 1]), updatePurchase);
-router.delete('/:id', authenticate, authorize([0, 1]), deletePurchase);
+// Public routes for purchases
+router.get('/', getPurchases);
+router.get('/:id', getPurchase);
+router.post('/', createPurchase);
+router.put('/:id', updatePurchase);
+router.delete('/:id', deletePurchase);
 
 export default router;

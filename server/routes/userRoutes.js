@@ -16,15 +16,11 @@ const router = express.Router();
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
-
-// Protected routes
-router.get('/profile', authenticate, getProfile);
-
-// Admin only routes
-router.get('/', authenticate, authorize([0, 1]), getUsers);
-router.get('/:id', authenticate, authorize([0, 1]), getUser);
-router.post('/', authenticate, authorize([0, 1]), createUser);
-router.put('/:id', authenticate, authorize([0, 1]), updateUser);
-router.delete('/:id', authenticate, authorize([0, 1]), deleteUser);
+router.get('/profile', getProfile);
+router.get('/', getUsers);
+router.get('/:id', getUser);
+router.post('/', createUser);
+router.put('/:id', updateUser);
+router.delete('/:id', deleteUser);
 
 export default router;
