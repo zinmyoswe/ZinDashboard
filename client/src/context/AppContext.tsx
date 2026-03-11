@@ -64,11 +64,37 @@ interface MarketingOrder {
   notes?: string;
 }
 
+interface InventoryItem {
+  _id: string;
+  productId: string;
+  productName: string;
+  sku?: string;
+  stock: number;
+  reorderLevel: number;
+  location?: string;
+  imageUrl?: string;
+  notes?: string;
+}
+
+interface PurchaseRequisition {
+  _id: string;
+  itemId: string;
+  itemName: string;
+  requestedQty: number;
+  status: 'Pending' | 'Submitted' | 'Approved' | 'Rejected';
+  notes?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AppContextType {
   suppliers: Supplier[];
   users: User[];
   purchases: Purchase[];
   marketingOrders: MarketingOrder[];
+  inventoryItems: InventoryItem[];
+  purchaseRequisitions: PurchaseRequisition[];
   loading: boolean;
   error: string | null;
   fetchSuppliers: () => Promise<void>;
@@ -87,6 +113,14 @@ interface AppContextType {
   addMarketingOrder: (order: Omit<MarketingOrder, '_id'>) => Promise<MarketingOrder>;
   updateMarketingOrder: (id: string, updatedOrder: Partial<MarketingOrder>) => Promise<MarketingOrder>;
   deleteMarketingOrder: (id: string) => Promise<void>;
+  fetchInventoryItems: () => Promise<void>;
+  addInventoryItem: (item: Omit<InventoryItem, '_id'>) => Promise<InventoryItem>;
+  updateInventoryItem: (id: string, updatedItem: Partial<InventoryItem>) => Promise<InventoryItem>;
+  deleteInventoryItem: (id: string) => Promise<void>;
+  fetchPurchaseRequisitions: () => Promise<void>;
+  addPurchaseRequisition: (req: Omit<PurchaseRequisition, '_id'>) => Promise<PurchaseRequisition>;
+  updatePurchaseRequisition: (id: string, updatedReq: Partial<PurchaseRequisition>) => Promise<PurchaseRequisition>;
+  deletePurchaseRequisition: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,6 +143,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [marketingOrders, setMarketingOrders] = useState<MarketingOrder[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [purchaseRequisitions, setPurchaseRequisitions] = useState<PurchaseRequisition[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -397,6 +433,124 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchInventoryItems = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/inventory`);
+      setInventoryItems(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addInventoryItem = async (item: Omit<InventoryItem, '_id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/inventory`, item);
+      const newItem = response.data;
+      setInventoryItems((prev) => [...prev, newItem]);
+      return newItem;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateInventoryItem = async (id: string, updatedItem: Partial<InventoryItem>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/inventory/${id}`, updatedItem);
+      const result = response.data;
+      setInventoryItems((prev) => prev.map((item) => (item._id === id ? result : item)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteInventoryItem = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/inventory/${id}`);
+      setInventoryItems((prev) => prev.filter((item) => item._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPurchaseRequisitions = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/requisition`);
+      setPurchaseRequisitions(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addPurchaseRequisition = async (req: Omit<PurchaseRequisition, '_id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/requisition`, req);
+      const newReq = response.data;
+      setPurchaseRequisitions((prev) => [...prev, newReq]);
+      return newReq;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePurchaseRequisition = async (id: string, updatedReq: Partial<PurchaseRequisition>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/requisition/${id}`, updatedReq);
+      const result = response.data;
+      setPurchaseRequisitions((prev) => prev.map((req) => (req._id === id ? result : req)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePurchaseRequisition = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/requisition/${id}`);
+      setPurchaseRequisitions((prev) => prev.filter((req) => req._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -408,6 +562,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         users,
         purchases,
         marketingOrders,
+        inventoryItems,
+        purchaseRequisitions,
         loading,
         error,
         fetchSuppliers,
@@ -426,6 +582,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         addMarketingOrder,
         updateMarketingOrder,
         deleteMarketingOrder,
+        fetchInventoryItems,
+        addInventoryItem,
+        updateInventoryItem,
+        deleteInventoryItem,
+        fetchPurchaseRequisitions,
+        addPurchaseRequisition,
+        updatePurchaseRequisition,
+        deletePurchaseRequisition,
       }}
     >
       {children}

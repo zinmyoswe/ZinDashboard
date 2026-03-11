@@ -25,6 +25,7 @@ import Users from "./admin/pages/Users"
 import Roles from "./admin/pages/Roles"
 import Reports from "./admin/pages/Reports"
 import Marketing from "./admin/pages/Marketing"
+import Requisitions from "./admin/pages/Requisitions"
 import Dashboard from "./admin/pages/Dashboard"
 
 const App = () => {
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="marketing" element={<Marketing />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="stock-logs" element={<StockLogs />} />
+          <Route path="requisitions" element={<Requisitions />} />
           <Route path="users" element={<Users />} />
           <Route path="roles" element={<Roles />} />
           <Route path="reports" element={<Reports />} />
