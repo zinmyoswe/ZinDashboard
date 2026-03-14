@@ -50,6 +50,8 @@ const data = {
         { title: "Inventory", url: "/admin/inventory" },
         { title: "Stock Logs", url: "/admin/stock-logs" },
         { title: "Requisitions", url: "/admin/requisitions" },
+        { title: "Finance & Accounting", url: "/admin/finance" },
+        { title: "Logistics & Supply", url: "/admin/logistics" },
       ],
     },
     {

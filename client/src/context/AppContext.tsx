@@ -88,6 +88,40 @@ interface PurchaseRequisition {
   updatedAt: string;
 }
 
+interface FinanceInvoice {
+  _id: string;
+  invoiceNumber: string;
+  type: 'Customer' | 'Supplier';
+  relatedPurchaseId?: string;
+  grnNumber?: string;
+  supplierInvoiceNumber?: string;
+  amount: number;
+  dueDate?: string;
+  status: 'Unpaid' | 'Paid' | 'Overdue';
+  payments?: Array<{
+    amount: number;
+    date: string;
+    method?: string;
+    note?: string;
+  }>;
+  notes?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface LogisticsShipment {
+  _id: string;
+  referenceId?: string;
+  carrierType: 'Truck' | 'Courier' | '3PL';
+  carrierName: string;
+  scheduledDate: string;
+  status: 'Scheduled' | 'InTransit' | 'Delivered';
+  podUrl?: string;
+  notes?: string;
+  createdBy?: string;
+}
+
 interface AppContextType {
   suppliers: Supplier[];
   users: User[];
@@ -95,6 +129,8 @@ interface AppContextType {
   marketingOrders: MarketingOrder[];
   inventoryItems: InventoryItem[];
   purchaseRequisitions: PurchaseRequisition[];
+  financeInvoices: FinanceInvoice[];
+  logisticsShipments: LogisticsShipment[];
   loading: boolean;
   error: string | null;
   fetchSuppliers: () => Promise<void>;
@@ -121,6 +157,11 @@ interface AppContextType {
   addPurchaseRequisition: (req: Omit<PurchaseRequisition, '_id'>) => Promise<PurchaseRequisition>;
   updatePurchaseRequisition: (id: string, updatedReq: Partial<PurchaseRequisition>) => Promise<PurchaseRequisition>;
   deletePurchaseRequisition: (id: string) => Promise<void>;
+  fetchFinanceInvoices: () => Promise<void>;
+  addFinanceInvoice: (invoice: Omit<FinanceInvoice, '_id' | 'createdAt' | 'updatedAt'>) => Promise<FinanceInvoice>;
+  updateFinanceInvoice: (id: string, updatedInvoice: Partial<FinanceInvoice>) => Promise<FinanceInvoice>;
+  deleteFinanceInvoice: (id: string) => Promise<void>;
+  payFinanceInvoice: (id: string, payment: { amount?: number; method?: string; note?: string }) => Promise<FinanceInvoice>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -145,6 +186,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [marketingOrders, setMarketingOrders] = useState<MarketingOrder[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [purchaseRequisitions, setPurchaseRequisitions] = useState<PurchaseRequisition[]>([]);
+  const [financeInvoices, setFinanceInvoices] = useState<FinanceInvoice[]>([]);
+  const [logisticsShipments, setLogisticsShipments] = useState<LogisticsShipment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -551,6 +594,140 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchFinanceInvoices = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/finance`);
+      setFinanceInvoices(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addFinanceInvoice = async (invoice: Omit<FinanceInvoice, '_id' | 'createdAt' | 'updatedAt'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/finance`, invoice);
+      const newInvoice = response.data;
+      setFinanceInvoices((prev) => [...prev, newInvoice]);
+      return newInvoice;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateFinanceInvoice = async (id: string, updatedInvoice: Partial<FinanceInvoice>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/finance/${id}`, updatedInvoice);
+      const result = response.data;
+      setFinanceInvoices((prev) => prev.map((inv) => (inv._id === id ? result : inv)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteFinanceInvoice = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/finance/${id}`);
+      setFinanceInvoices((prev) => prev.filter((inv) => inv._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const payFinanceInvoice = async (id: string, payment: { amount?: number; method?: string; note?: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/finance/${id}/pay`, payment);
+      const result = response.data;
+      setFinanceInvoices((prev) => prev.map((inv) => (inv._id === id ? result : inv)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLogisticsShipments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/logistics`);
+      setLogisticsShipments(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addLogisticsShipment = async (shipment: Omit<LogisticsShipment, '_id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/logistics`, shipment);
+      const newShipment = response.data;
+      setLogisticsShipments((prev) => [...prev, newShipment]);
+      return newShipment;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateLogisticsShipment = async (id: string, updatedShipment: Partial<LogisticsShipment>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/logistics/${id}`, updatedShipment);
+      const result = response.data;
+      setLogisticsShipments((prev) => prev.map((shipment) => (shipment._id === id ? result : shipment)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteLogisticsShipment = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/logistics/${id}`);
+      setLogisticsShipments((prev) => prev.filter((shipment) => shipment._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSuppliers();
   }, []);
@@ -564,6 +741,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         marketingOrders,
         inventoryItems,
         purchaseRequisitions,
+        financeInvoices,
+        logisticsShipments,
         loading,
         error,
         fetchSuppliers,
@@ -590,6 +769,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         addPurchaseRequisition,
         updatePurchaseRequisition,
         deletePurchaseRequisition,
+        fetchFinanceInvoices,
+        addFinanceInvoice,
+        updateFinanceInvoice,
+        deleteFinanceInvoice,
+        payFinanceInvoice,
+        fetchLogisticsShipments,
+        addLogisticsShipment,
+        updateLogisticsShipment,
+        deleteLogisticsShipment,
       }}
     >
       {children}
