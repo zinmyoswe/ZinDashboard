@@ -11,6 +11,7 @@ import inventoryRoutes from './routes/inventoryRoutes.js';
 import purchaseRequisitionRoutes from './routes/purchaseRequisitionRoutes.js';
 import logisticsRoutes from './routes/logisticsRoutes.js';
 import financeRoutes from './routes/financeRoutes.js';
+import productionRoutes from './routes/productionRoutes.js';
 
 const app = express();
 const port = 3000;
@@ -31,6 +32,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/requisition', purchaseRequisitionRoutes);
 app.use('/api/logistics', logisticsRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/production', productionRoutes);
 app.get('/', (req,res) => res.send('Zin POS Server is Live!'))
 
 app.listen(port, ()=> console.log(`Server listening at http://localhost:${port}`));

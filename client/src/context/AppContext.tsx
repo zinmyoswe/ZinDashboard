@@ -110,6 +110,27 @@ interface FinanceInvoice {
   updatedAt: string;
 }
 
+interface ProductionOrder {
+  _id: string;
+  orderNumber: string;
+  productId?: string;
+  productName: string;
+  quantity: number;
+  status: 'PLANNED' | 'IN_PROGRESS' | 'PAUSED' | 'COMPLETED' | 'CANCELLED';
+  plannedStart?: string;
+  plannedEnd?: string;
+  materials?: Array<{
+    materialId?: string;
+    materialName: string;
+    requiredQty: number;
+    consumedQty: number;
+  }>;
+  notes?: string;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface LogisticsShipment {
   _id: string;
   referenceId?: string;
@@ -129,6 +150,7 @@ interface AppContextType {
   marketingOrders: MarketingOrder[];
   inventoryItems: InventoryItem[];
   purchaseRequisitions: PurchaseRequisition[];
+  productionOrders: ProductionOrder[];
   financeInvoices: FinanceInvoice[];
   logisticsShipments: LogisticsShipment[];
   loading: boolean;
@@ -157,6 +179,10 @@ interface AppContextType {
   addPurchaseRequisition: (req: Omit<PurchaseRequisition, '_id'>) => Promise<PurchaseRequisition>;
   updatePurchaseRequisition: (id: string, updatedReq: Partial<PurchaseRequisition>) => Promise<PurchaseRequisition>;
   deletePurchaseRequisition: (id: string) => Promise<void>;
+  fetchProductionOrders: () => Promise<void>;
+  addProductionOrder: (order: Omit<ProductionOrder, '_id' | 'createdAt' | 'updatedAt'>) => Promise<ProductionOrder>;
+  updateProductionOrder: (id: string, updatedOrder: Partial<ProductionOrder>) => Promise<ProductionOrder>;
+  deleteProductionOrder: (id: string) => Promise<void>;
   fetchFinanceInvoices: () => Promise<void>;
   addFinanceInvoice: (invoice: Omit<FinanceInvoice, '_id' | 'createdAt' | 'updatedAt'>) => Promise<FinanceInvoice>;
   updateFinanceInvoice: (id: string, updatedInvoice: Partial<FinanceInvoice>) => Promise<FinanceInvoice>;
@@ -186,6 +212,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [marketingOrders, setMarketingOrders] = useState<MarketingOrder[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [purchaseRequisitions, setPurchaseRequisitions] = useState<PurchaseRequisition[]>([]);
+  const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>([]);
   const [financeInvoices, setFinanceInvoices] = useState<FinanceInvoice[]>([]);
   const [logisticsShipments, setLogisticsShipments] = useState<LogisticsShipment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -594,6 +621,65 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchProductionOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/production`);
+      setProductionOrders(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addProductionOrder = async (order: Omit<ProductionOrder, '_id' | 'createdAt' | 'updatedAt'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/production`, order);
+      const newOrder = response.data;
+      setProductionOrders((prev) => [...prev, newOrder]);
+      return newOrder;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProductionOrder = async (id: string, updatedOrder: Partial<ProductionOrder>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/production/${id}`, updatedOrder);
+      const result = response.data;
+      setProductionOrders((prev) => prev.map((ord) => (ord._id === id ? result : ord)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProductionOrder = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/production/${id}`);
+      setProductionOrders((prev) => prev.filter((ord) => ord._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchFinanceInvoices = async () => {
     setLoading(true);
     setError(null);
@@ -741,6 +827,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         marketingOrders,
         inventoryItems,
         purchaseRequisitions,
+        productionOrders,
         financeInvoices,
         logisticsShipments,
         loading,
@@ -769,6 +856,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         addPurchaseRequisition,
         updatePurchaseRequisition,
         deletePurchaseRequisition,
+        fetchProductionOrders,
+        addProductionOrder,
+        updateProductionOrder,
+        deleteProductionOrder,
         fetchFinanceInvoices,
         addFinanceInvoice,
         updateFinanceInvoice,

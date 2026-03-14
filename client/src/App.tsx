@@ -27,6 +27,7 @@ import Reports from "./admin/pages/Reports"
 import Marketing from "./admin/pages/Marketing"
 import Requisitions from "./admin/pages/Requisitions"
 import FinanceAccounting from "./admin/pages/FinanceAccounting"
+import Production from "./admin/pages/Production"
 import Logisticsandsupplychain from "./admin/pages/Logisticsandsupplychain"
 import Dashboard from "./admin/pages/Dashboard"
 
@@ -71,6 +72,7 @@ const App = () => {
           <Route path="inventory" element={<Inventory />} />
           <Route path="stock-logs" element={<StockLogs />} />
           <Route path="requisitions" element={<Requisitions />} />
+          <Route path="production" element={<Production />} />
           <Route path="finance" element={<FinanceAccounting />} />
           <Route path="logistics" element={<Logisticsandsupplychain />} />
           <Route path="users" element={<Users />} />
