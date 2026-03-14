@@ -23,19 +23,12 @@ const data = {
         { title: "Dashboard", url: "/admin/dashboard", isActive: true},
       ],
     },
-    {
-      title: "Master Data",
-      items: [
-        { title: "Products", url: "/admin/products" },
-        { title: "Categories", url: "/admin/categories" },
-        { title: "Suppliers", url: "/admin/suppliers" },
-      ],
-    },
+    
     {
       title: "Purchasing",
       items: [
         { title: "Purchases", url: "/admin/purchases" },
-        { title: "Purchase Details", url: "/admin/purchases/:id" },
+        // { title: "Purchase Details", url: "/admin/purchases/:id" },
       ],
     },
     {
@@ -45,13 +38,24 @@ const data = {
       ],
     },
     {
-      title: "Inventory",
+      title: "Inventory WareHouse",
       items: [
         { title: "Inventory", url: "/admin/inventory" },
-        { title: "Stock Logs", url: "/admin/stock-logs" },
+        // { title: "Stock Logs", url: "/admin/stock-logs" },
         { title: "Requisitions", url: "/admin/requisitions" },
-        { title: "Finance & Accounting", url: "/admin/finance" },
-        { title: "Logistics & Supply", url: "/admin/logistics" },
+      ],
+    },
+    {
+      title: "Finance & Accounting",
+      items: [
+        { title: "Finance", url: "/admin/finance" },
+      ],
+    },
+    {
+      title: "Logistics & Supply Chain",
+      items: [
+        { title: "Logistics", url: "/admin/logistics" },
+
       ],
     },
     {
@@ -65,6 +69,19 @@ const data = {
       title: "Reports",
       items: [
         { title: "Reports", url: "/admin/reports" },
+      ],
+    },
+    {
+      title: "Supplier",
+      items: [
+        { title: "Suppliers", url: "/admin/suppliers" },
+      ],
+    },
+    {
+      title: "Master Data",
+      items: [
+        { title: "Products", url: "/admin/products" },
+        { title: "Categories", url: "/admin/categories" },
       ],
     },
   ],
