@@ -153,6 +153,7 @@ interface AppContextType {
   productionOrders: ProductionOrder[];
   financeInvoices: FinanceInvoice[];
   logisticsShipments: LogisticsShipment[];
+  qualityInspections: QualityInspection[];
   loading: boolean;
   error: string | null;
   fetchSuppliers: () => Promise<void>;
@@ -188,6 +189,11 @@ interface AppContextType {
   updateFinanceInvoice: (id: string, updatedInvoice: Partial<FinanceInvoice>) => Promise<FinanceInvoice>;
   deleteFinanceInvoice: (id: string) => Promise<void>;
   payFinanceInvoice: (id: string, payment: { amount?: number; method?: string; note?: string }) => Promise<FinanceInvoice>;
+  fetchQualityInspections: () => Promise<void>;
+  addQualityInspection: (inspection: Omit<QualityInspection, '_id' | 'createdAt' | 'updatedAt'>) => Promise<QualityInspection>;
+  updateQualityInspection: (id: string, updatedInspection: Partial<QualityInspection>) => Promise<QualityInspection>;
+  deleteQualityInspection: (id: string) => Promise<void>;
+  updateInspectionStatus: (id: string, status: QualityInspection['status'], defectReports?: string[]) => Promise<QualityInspection>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -215,6 +221,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>([]);
   const [financeInvoices, setFinanceInvoices] = useState<FinanceInvoice[]>([]);
   const [logisticsShipments, setLogisticsShipments] = useState<LogisticsShipment[]>([]);
+  const [qualityInspections, setQualityInspections] = useState<QualityInspection[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -755,6 +762,81 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const fetchQualityInspections = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/quality`);
+      setQualityInspections(response.data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addQualityInspection = async (inspection: Omit<QualityInspection, '_id' | 'createdAt' | 'updatedAt'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/quality`, inspection);
+      const newInspection = response.data;
+      setQualityInspections((prev) => [...prev, newInspection]);
+      return newInspection;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateQualityInspection = async (id: string, updatedInspection: Partial<QualityInspection>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/quality/${id}`, updatedInspection);
+      const result = response.data;
+      setQualityInspections((prev) => prev.map((ins) => (ins._id === id ? result : ins)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteQualityInspection = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/quality/${id}`);
+      setQualityInspections((prev) => prev.filter((ins) => ins._id !== id));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateInspectionStatus = async (id: string, status: QualityInspection['status'], defectReports?: string[]) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/quality/${id}/status`, { status, defectReports });
+      const result = response.data;
+      setQualityInspections((prev) => prev.map((ins) => (ins._id === id ? result : ins)));
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchLogisticsShipments = async () => {
     setLoading(true);
     setError(null);
@@ -830,6 +912,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         productionOrders,
         financeInvoices,
         logisticsShipments,
+        qualityInspections,
         loading,
         error,
         fetchSuppliers,
@@ -865,6 +948,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         updateFinanceInvoice,
         deleteFinanceInvoice,
         payFinanceInvoice,
+        fetchQualityInspections,
+        addQualityInspection,
+        updateQualityInspection,
+        deleteQualityInspection,
+        updateInspectionStatus,
         fetchLogisticsShipments,
         addLogisticsShipment,
         updateLogisticsShipment,

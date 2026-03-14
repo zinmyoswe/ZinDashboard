@@ -44,6 +44,7 @@ const data = {
         // { title: "Stock Logs", url: "/admin/stock-logs" },
         { title: "Requisitions", url: "/admin/requisitions" },
         { title: "Production", url: "/admin/production" },
+        { title: "Quality", url: "/admin/quality" },
       ],
     },
     {
