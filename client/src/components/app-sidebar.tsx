@@ -43,8 +43,18 @@ const data = {
         { title: "Inventory", url: "/admin/inventory" },
         // { title: "Stock Logs", url: "/admin/stock-logs" },
         { title: "Requisitions", url: "/admin/requisitions" },
-        { title: "Production", url: "/admin/production" },
+      ],
+    },
+    {
+      title: "Quality Management",
+      items: [
         { title: "Quality", url: "/admin/quality" },
+      ],
+    },
+    {
+      title: "Production Management",
+      items: [
+        { title: "Production", url: "/admin/production" },
       ],
     },
     {
